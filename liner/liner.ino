@@ -3,29 +3,44 @@
 #define R2 5
 #define L1 4
 #define L2 3
-#define FIX -20
-//Sensor
-#define IR 22
-int x;
+#define FIX 0
+
+#define SPEED 80
+//Sensor right and left IR receiver
+#define RIR 50
+#define LIR 51
+//button
+#define B1 45
+boolean r;
+boolean l;
+
+boolean button(){
+  return !digitalRead(B1);
+}
 
 void setup() {
   // put your setup code here, to run once:
-  pinMode(IR, INPUT);
+  pinMode(RIR, INPUT);
+  pinMode(LIR, INPUT);
+  pinMode(B1, INPUT);
   Serial.begin(9600);
   Serial.println("begin");
-  delay(5000);
-  for (byte i = 0; i < 4; i++) {
-    easymotor(200, 200, 1000);
-    easymotor(100, -100, 1000);
-  }
-  setmotor(0, 0);
+  while(!button()){}
 }
 
 void loop() {
   // put your main code here, to run repeatedly:
-  x = digitalRead(IR);
-  Serial.println(x);
-  delay(500);
+  r = digitalRead(RIR);
+  l = digitalRead(LIR);
+  Serial.println(r, l);
+  if(r && !l){
+    setmotor(-1*SPEED, SPEED);
+  }else if(!r && l){
+    setmotor(SPEED, -1*SPEED);
+  }else{
+    setmotor(SPEED, SPEED);
+  }
 }
+
 
 
