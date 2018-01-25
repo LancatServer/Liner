@@ -24,6 +24,13 @@ void setmotor(int B, int A) {
     digitalWrite(L2, LOW);
   }
 }
+
+void setservo(int l, int r){
+  r *= -1;
+  Lservo.write(l + SERMID);
+  Rservo.write(r + SERMID);
+}
+
 void easymotor(int A,int B,int t){
   setmotor(A,B);
   delay(t);
