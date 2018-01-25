@@ -1,9 +1,9 @@
 void setmotor(int B, int A) {
-  if (A > 0) {
+  if (A < 0) {
     A += FIX;
     analogWrite(R1, A);
     digitalWrite(R2, LOW);
-  } else if (A < 0) {
+  } else if (A > 0) {
     A += FIX;
     digitalWrite(R1, LOW);
     analogWrite(R2, A);
@@ -23,12 +23,6 @@ void setmotor(int B, int A) {
     digitalWrite(L1, LOW);
     digitalWrite(L2, LOW);
   }
-}
-
-void setservo(int l, int r){
-  r *= -1;
-  Lservo.write(l + SERMID);
-  Rservo.write(r + SERMID);
 }
 
 void easymotor(int A,int B,int t){
