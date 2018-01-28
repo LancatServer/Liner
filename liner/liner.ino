@@ -10,9 +10,9 @@
 //button （開始開關）
 #define B1 45
 //演算法參數
-#define H 750 //黑線
-#define L 50  //白線
-#define MID (H+L)/2
+float H = 400; //黑線
+float L = 400; //
+float MID = (H+L)/2;
 #define range 100
 #define MT 0.2;
 #define SPEED 70
@@ -20,9 +20,13 @@
 //取得尋線資料（黑白線的參數要改）
 float getvolue(){
   float x = analogRead(RIR);
+  MID = (H+L)/2;
   if(x < L){
+    //覆寫最高質
+    L = x;
     return 0;
   }else if(x > H){
+    H = x;
     return 0;
   }else{
     return x - MID;
@@ -47,7 +51,7 @@ void loop() {
   }else if(error < -range){
     setmotor(0,80);
   }else{
-    setmotor(60,60);
+    setmotor(70,70);
   }
 }
 
