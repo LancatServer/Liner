@@ -3,7 +3,7 @@
 #define R2 5
 #define L1 4
 #define L2 3
-#define FIX 0
+#define FIX -5
 //Sensor right and left IR receiver
 //感測器目前只用RIR（右邊的感測器）
 #define RIR A1
@@ -14,13 +14,15 @@ float H = 400; //黑線
 float L = 400; //
 float MID = (H+L)/2;
 #define range 100
-#define MT 0.2;
-#define SPEED 70
+float MT = 0.3;
+int SPEED = 50;
 
 //取得尋線資料（黑白線的參數要改）
-float getvolue(){
+float getvalue(){
   float x = analogRead(RIR);
   MID = (H+L)/2;
+  //讓回傳值介於0到100，設比例s
+  float s = 100 / (H-MID);
   if(x < L){
     //覆寫最高質
     L = x;
@@ -29,7 +31,7 @@ float getvolue(){
     H = x;
     return 0;
   }else{
-    return x - MID;
+    return (x-MID)*s;
   }
 }
 
@@ -39,19 +41,13 @@ void setup() {
   Serial.begin(9600);
   Serial.println("begin");
   while(digitalRead(B1)){}
-  setmotor(100,100);
   delay(500);
 }
 
 void loop() {
   // put your main code here, to run repeatedly:
-  float error = getvolue(); //讀到的數值
-  if(error > range){
-    setmotor(80,0);
-  }else if(error < -range){
-    setmotor(0,80);
-  }else{
-    setmotor(70,70);
-  }
+  float error = getvalue(); //讀到的數值
+  float turn = MT*error;
+  setmotor(SPEED+turn, SPEED-turn);
 }
 
