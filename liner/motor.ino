@@ -1,4 +1,6 @@
 void setmotor(int B, int A) {
+  A = max(A, 30);
+  B = max(B, 30);
   if (A < 0) {
     A += FIX;
     analogWrite(R1, A);
@@ -24,12 +26,4 @@ void setmotor(int B, int A) {
     digitalWrite(L2, LOW);
   }
 }
-
-void easymotor(int A,int B,int t){
-  setmotor(A,B);
-  delay(t);
-  setmotor(0,0);
-}
-
-
 

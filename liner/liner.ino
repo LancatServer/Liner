@@ -1,3 +1,6 @@
+#define DS 30
+#define SH_CP 31
+#define ST_CP 32
 //motor setting 馬達設定（依據車子狀況）
 #define R1 6
 #define R2 5
@@ -10,12 +13,14 @@
 //button （開始開關）
 #define B1 45
 //演算法參數
+#define range 100
+#define MT -0.4  //轉彎比重（現在）
+#define MR -0.6  //記憶比重（過去）
 float H = 400; //黑線
 float L = 400; //
-float MID = (H+L)/2;
-#define range 100
-float MT = 0.3;
-int SPEED = 50;
+float MID;
+float remenber;
+int SPEED = 60;
 
 //取得尋線資料（黑白線的參數要改）
 float getvalue(){
@@ -24,7 +29,7 @@ float getvalue(){
   //讓回傳值介於0到100，設比例s
   float s = 100 / (H-MID);
   if(x < L){
-    //覆寫最高質
+    //覆寫最高值
     L = x;
     return 0;
   }else if(x > H){
@@ -35,8 +40,16 @@ float getvalue(){
   }
 }
 
+void set_remenber(float x){
+  remenber *= 3/4;
+  remenber += x;
+}
+
 void setup() {
   pinMode(B1, INPUT);
+  pinMode(DS, OUTPUT);
+  pinMode(SH_CP, OUTPUT);
+  pinMode(ST_CP, OUTPUT);
   digitalWrite(B1, HIGH); //上拉電阻
   Serial.begin(9600);
   Serial.println("begin");
@@ -47,7 +60,7 @@ void setup() {
 void loop() {
   // put your main code here, to run repeatedly:
   float error = getvalue(); //讀到的數值
-  float turn = MT*error;
+  float turn = MT*error + MR * remenber;
   setmotor(SPEED+turn, SPEED-turn);
 }
 
