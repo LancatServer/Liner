@@ -1,3 +1,9 @@
+//LCD 設定
+#include <LiquidCrystal_I2C.h>
+#include <Wire.h>
+
+LiquidCrystal_I2C lcd(0x27, 2, 1, 0, 4, 5, 6, 7, 3, POSITIVE);
+//七段顯示器設定
 #define DS 30
 #define SH_CP 31
 #define ST_CP 32
@@ -15,7 +21,7 @@
 //演算法參數
 #define range 100
 #define MT -0.4  //轉彎比重（現在）
-#define MR -0.6  //記憶比重（過去）
+#define MR -0.4  //記憶比重（過去）
 float H = 400; //黑線
 float L = 400; //
 float MID;
@@ -53,14 +59,19 @@ void setup() {
   digitalWrite(B1, HIGH); //上拉電阻
   Serial.begin(9600);
   Serial.println("begin");
+  lcd.begin(16, 2);
   while(digitalRead(B1)){}
   delay(500);
+  test_lcd();
+  while(1 == 1){}
 }
 
 void loop() {
   // put your main code here, to run repeatedly:
   float error = getvalue(); //讀到的數值
+  set_remenber(error);
   float turn = MT*error + MR * remenber;
   setmotor(SPEED+turn, SPEED-turn);
 }
+
 
