@@ -14,7 +14,7 @@ int number[][8] = {
 };
 
 //七段顯示器輸出數字
-void set_number(int num){
+/*void set_number(int num){
   digitalWrite(ST_CP,LOW);
   for (int i = 0;i<=7;i++){
     //設定內容
@@ -25,7 +25,7 @@ void set_number(int num){
     }
   digitalWrite(ST_CP,HIGH);
   //將所有資料推送到外部
-}
+}*/
 
 //擷取數字的某一位數
 int cut(int num,int a){
@@ -33,4 +33,12 @@ int cut(int num,int a){
   //num / 10**a
   return b%10;
 }
+
+void output_score(){
+  lcd.clear();
+  lcd.setCursor(0,0);
+  String output = String(score/num_of_time);
+  lcd.print("score:"+output);
+}
+
 

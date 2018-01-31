@@ -1,12 +1,10 @@
+#include <SimpleTimer.h>
+SimpleTimer timer;
 //LCD 設定
 #include <LiquidCrystal_I2C.h>
 #include <Wire.h>
 
 LiquidCrystal_I2C lcd(0x27, 2, 1, 0, 4, 5, 6, 7, 3, POSITIVE);
-//七段顯示器設定
-#define DS 30
-#define SH_CP 31
-#define ST_CP 32
 //motor setting 馬達設定（依據車子狀況）
 #define R1 6
 #define R2 5
@@ -28,50 +26,65 @@ float MID;
 float remenber;
 int SPEED = 60;
 
+long score;
+long num_of_time;
+
 //取得尋線資料（黑白線的參數要改）
-float getvalue(){
+float getvalue() {
   float x = analogRead(RIR);
-  MID = (H+L)/2;
+  MID = (H + L) / 2;
   //讓回傳值介於0到100，設比例s
-  float s = 100 / (H-MID);
-  if(x < L){
+  float s = 100 / (H - MID);
+  if (x < L) {
     //覆寫最高值
     L = x;
     return 0;
-  }else if(x > H){
+  } else if (x > H) {
     H = x;
     return 0;
-  }else{
-    return (x-MID)*s;
+  } else {
+    float y = (x - MID) * s;
+    return y;
   }
 }
 
-void set_remenber(float x){
-  remenber *= 3/4;
+void set_remenber(float x) {
+  remenber *= 3 / 4;
   remenber += x;
+}
+
+void set_score() {
+  float y = getvalue();
+  score += abs(y);
+  num_of_time ++;
 }
 
 void setup() {
   pinMode(B1, INPUT);
-  pinMode(DS, OUTPUT);
-  pinMode(SH_CP, OUTPUT);
-  pinMode(ST_CP, OUTPUT);
   digitalWrite(B1, HIGH); //上拉電阻
   Serial.begin(9600);
   Serial.println("begin");
   lcd.begin(16, 2);
-  while(digitalRead(B1)){}
+  lcd.setCursor(0, 0);
+  lcd.print("Welcome");
+  timer.setInterval(1000, output_score);
+  timer.setInterval(10, set_score);
+  while (digitalRead(B1)) {}
   delay(500);
-  test_lcd();
-  while(1 == 1){}
 }
 
 void loop() {
   // put your main code here, to run repeatedly:
   float error = getvalue(); //讀到的數值
   set_remenber(error);
-  float turn = MT*error + MR * remenber;
-  setmotor(SPEED+turn, SPEED-turn);
+  float turn = MT * error + MR * remenber;
+  setmotor(SPEED + turn, SPEED - turn);
+  timer.run();
+  if (!digitalRead(B1)) {
+    setmotor(0, 0);
+    while (1 == 1) {}
+  }
 }
+
 
 
