@@ -11,6 +11,8 @@ LiquidCrystal_I2C lcd(0x27, 2, 1, 0, 4, 5, 6, 7, 3, POSITIVE);
 #define L1 4
 #define L2 3
 #define FIX -5
+int Rmotor;
+int Lmotor;
 //Sensor right and left IR receiver
 //感測器目前只用RIR（右邊的感測器）
 #define RIR A1
@@ -18,12 +20,14 @@ LiquidCrystal_I2C lcd(0x27, 2, 1, 0, 4, 5, 6, 7, 3, POSITIVE);
 #define B1 45
 //演算法參數
 #define range 100
-#define MT -0.4  //轉彎比重（現在）
-#define MR -0.4  //記憶比重（過去）
+#define MT 0.4  //轉彎比重（現在）
+#define MR 0.5  //記憶比重（過去）
+#define MF 20
 float H = 400; //黑線
 float L = 400; //
 float MID;
 float remenber;
+float last_error;
 int SPEED = 60;
 
 long score;
@@ -67,7 +71,7 @@ void setup() {
   lcd.begin(16, 2);
   lcd.setCursor(0, 0);
   lcd.print("Welcome");
-  timer.setInterval(1000, output_score);
+  timer.setInterval(500, output_score);
   timer.setInterval(10, set_score);
   while (digitalRead(B1)) {}
   delay(500);
@@ -77,8 +81,10 @@ void loop() {
   // put your main code here, to run repeatedly:
   float error = getvalue(); //讀到的數值
   set_remenber(error);
-  float turn = MT * error + MR * remenber;
+  float future = error - last_error;
+  float turn = MT * error + MR * remenber + MF * future;
   setmotor(SPEED + turn, SPEED - turn);
+  last_error = error;
   timer.run();
   if (!digitalRead(B1)) {
     setmotor(0, 0);

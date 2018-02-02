@@ -39,6 +39,10 @@ void output_score(){
   lcd.setCursor(0,0);
   String output = String(score/num_of_time);
   lcd.print("score:"+output);
+
+  output = "motor:" + String(Lmotor) + ", " + String(Rmotor);
+  lcd.setCursor(0,1);
+  lcd.print(output);
 }
 
 
