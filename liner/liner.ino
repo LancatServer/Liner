@@ -20,36 +20,40 @@ int Lmotor;
 //button （開始開關）
 #define B1 45
 //演算法參數
-float KP = 0.4;  //轉彎比重（現在）
+byte path = 1;
+float Kp = 0.4;  //轉彎比重（現在）
 float Ki = 0.5;  //記憶比重（過去）
 float Kd = 40;   //趨勢比重（未來）
 
-#define range 50
+#define range 60
 float H = 400; //黑線
 float L = 400; //白線
 float remenber;
 float last_error;
-int SPEED = 60;
+int SPEED = 70;
 
 long score;
 long num_of_time;
 
 int time_of_out;
 
-//取得尋線資料（黑白線的參數要改）
+//取得循線資料
 float getvalue() {
+  //x 為類比輸入的值
   float x = analogRead(RIR);
+  //MID為黑白中心的值
   float MID = (H + L) / 2;
-  //讓回傳值介於0到100，設比例s
+  //s為H-L到正負100的比例
   float s = 100 / (H - L) * 2;
+  //如果超過就回傳極限值
   if (abs(x-L) < range) {
-    //覆寫最高值
     time_of_out ++;
     return -100;
   } else if (x > H) {
     return 100;
   } else {
     time_of_out = 0;
+    //將x標準化
     return (x - MID) * s;
   }
 }
@@ -85,7 +89,7 @@ void loop() {
   float error = getvalue(); //讀到的數值
   set_remenber(error);
   float future = error - last_error;
-  float turn = KP * error + Ki * remenber + Kd * future;
+  float turn = (Kp * error + Ki * remenber + Kd * future) * path;
   setmotor(SPEED + turn, SPEED - turn);
   last_error = error;
   timer.run();

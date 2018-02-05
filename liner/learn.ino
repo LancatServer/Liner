@@ -8,9 +8,7 @@ void learn(){
       L = x;
     }
   }else if(time_of_out > 0){
-    KP *= -1;
-    Ki *= -1;
-    Kd *= -1;
+    path *= 1;
     time_of_out = 0;
     lcd.setCursor(0,1);
     lcd.print("Change");
