@@ -11,8 +11,8 @@ void setmotor(int B, int A) {
     //將兩個馬達的值控制在30到170
     A = max(A, 30);
     B = max(B, 30);
-    A = min(A, 250);
-    B = min(B, 250);
+    A = min(A, 170);
+    B = min(B, 170);
     //紀錄馬達值，供其他函數運用
     Rmotor = A;
     Lmotor = B;

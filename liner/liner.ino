@@ -1,3 +1,8 @@
+#include <SPI.h>
+#include <SD.h>
+
+File myfile;
+
 //時間管理設定
 #include <SimpleTimer.h>
 SimpleTimer timer;
@@ -20,7 +25,7 @@ int Lmotor;
 //button （開始開關）
 #define B1 45
 //演算法參數
-byte path = 1;
+int path = 1;
 float Kp = 0.4;  //轉彎比重（現在）
 float Ki = 0.5;  //記憶比重（過去）
 float Kd = 40;   //趨勢比重（未來）
@@ -28,12 +33,13 @@ float Kd = 40;   //趨勢比重（未來）
 #define range 60
 float H = 400; //黑線
 float L = 400; //白線
-float remenber;
+float Integral;
 float last_error;
 int SPEED = 70;
 
-long score;
-long num_of_time;
+long score = 0;
+long num_of_time = 0;
+int cpu_time;
 
 int time_of_out;
 
@@ -46,7 +52,7 @@ float getvalue() {
   //s為H-L到正負100的比例
   float s = 100 / (H - L) * 2;
   //如果超過就回傳極限值
-  if (abs(x-L) < range) {
+  if (x < L) {
     time_of_out ++;
     return -100;
   } else if (x > H) {
@@ -59,9 +65,9 @@ float getvalue() {
 }
 
 //I
-void set_remenber(float x) {
-  remenber *= 3 / 4;
-  remenber += x;
+void set_Integral(float x) {
+  Integral *= 3 / 4;
+  Integral += x;
 }
 
 void set_score() {
@@ -70,26 +76,33 @@ void set_score() {
   num_of_time ++;
 }
 
+void write_angle(float angle){
+  String writeable = String(angle);
+}
+
 void setup() {
   pinMode(B1, INPUT);
   digitalWrite(B1, HIGH); //上拉電阻
   Serial.begin(9600);
   Serial.println("begin");
   lcd.begin(16, 2);
+  lcd.noBacklight();
   lcd.setCursor(0, 0);
   lcd.print("Welcome");
   timer.setInterval(500, output_score);
-  timer.setInterval(10, set_score);
+  timer.setInterval(50, set_score);
+  SD.begin(53);
   while (digitalRead(B1)) {}
   delay(500);
+  lcd.backlight();
 }
 
 void loop() {
   // put your main code here, to run repeatedly:
   float error = getvalue(); //讀到的數值
-  set_remenber(error);
+  set_Integral(error);
   float future = error - last_error;
-  float turn = (Kp * error + Ki * remenber + Kd * future) * path;
+  float turn = (Kp * error + Ki * Integral + Kd * future) * path;
   setmotor(SPEED + turn, SPEED - turn);
   last_error = error;
   timer.run();
@@ -98,6 +111,7 @@ void loop() {
     setmotor(0, 0);
     while (1 == 1) {}
   }
+  cpu_time ++;
 }
 
 
