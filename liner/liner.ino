@@ -21,8 +21,8 @@ int Lmotor;
 //演算法參數
 #define range 100
 #define MT 0.4  //轉彎比重（現在）
-#define MR 5  //記憶比重（過去）
-#define MF 0
+#define MR 0.5  //記憶比重（過去）
+#define MF 20
 float H = 400; //黑線
 float L = 400; //
 float MID;
@@ -83,6 +83,8 @@ void loop() {
   timer.run();
   if (!digitalRead(B1)) {
     setmotor(0, 0);
+    delay(6000);
+    lcd.noBacklight();
     while (1 == 1) {}
   }
 }
