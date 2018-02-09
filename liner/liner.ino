@@ -21,8 +21,8 @@ int Lmotor;
 //演算法參數
 #define range 100
 #define MT 0.4  //轉彎比重（現在）
-#define MR 0.5  //記憶比重（過去）
-#define MF 20
+#define MR 5  //記憶比重（過去）
+#define MF 0
 float H = 400; //黑線
 float L = 400; //
 float MID;
@@ -30,8 +30,9 @@ float remenber;
 float last_error;
 int SPEED = 60;
 
-long score;
-long num_of_time;
+unsigned long score;
+unsigned long num_of_time;
+unsigned long distance;
 
 //取得尋線資料（黑白線的參數要改）
 float getvalue() {
@@ -57,12 +58,6 @@ void set_remenber(float x) {
   remenber += x;
 }
 
-void set_score() {
-  float y = getvalue();
-  score += abs(y);
-  num_of_time ++;
-}
-
 void setup() {
   pinMode(B1, INPUT);
   digitalWrite(B1, HIGH); //上拉電阻
@@ -71,8 +66,8 @@ void setup() {
   lcd.begin(16, 2);
   lcd.setCursor(0, 0);
   lcd.print("Welcome");
-  timer.setInterval(500, output_score);
-  timer.setInterval(10, set_score);
+  timer.setInterval(1000, output_score);
+  timer.setInterval(50, set_score);
   while (digitalRead(B1)) {}
   delay(500);
 }
