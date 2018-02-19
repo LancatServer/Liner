@@ -5,12 +5,12 @@ void setmotor(int B, int A) {
     digitalWrite(L1, LOW);
     digitalWrite(L2, LOW);
   }else{
-    /*A = max(A, 30);
+    A = max(A, 30);
     B = max(B, 30);
     A = min(A, 150);
     B = min(B, 150);
     Rmotor = A;
-    Lmotor = B;*/
+    Lmotor = B;
     if (A < 0) {
       A += FIX;
       analogWrite(R1, A);

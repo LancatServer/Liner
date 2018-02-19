@@ -36,24 +36,21 @@ unsigned long num_of_time;
 unsigned long distance;
 
 //取得尋線資料（黑白線的參數要改）
-boolean getvalue(int IR) {
-  float x = analogRead(IR);
+float getvalue() {
+  float x = analogRead(RIR);
   MID = (H + L) / 2;
   //讓回傳值介於0到100，設比例s
   float s = 100 / (H - MID);
   if (x < L) {
     //覆寫最高值
     L = x;
-    return true;
+    return 0;
   } else if (x > H) {
     H = x;
-    return false;
+    return 0;
   } else {
-    if (x > MID){
-      return false;
-    }else{
-      return true;
-    }
+    float y = (x - MID) * s;
+    return y;
   }
 }
 
@@ -70,23 +67,23 @@ void setup() {
   lcd.begin(16, 2);
   lcd.setCursor(0, 0);
   lcd.print("Welcome");
-  //timer.setInterval(1000, output_score);
-  //timer.setInterval(50, set_score);
+  timer.setInterval(1000, output_score);
+  timer.setInterval(50, set_score);
   while (digitalRead(B1)) {}
   delay(500);
 }
 
 void loop() {
   // put your main code here, to run repeatedly:
-  boolean r = digitalRead(RIR);
-  boolean l = digitalRead(LIR);
-  if (r & !l){
-    setmotor(80, 0);
-  }else if(l & !r){
-    setmotor(0, 80);
-  }else if (!l & !r){
-    setmotor(50, 50);
+  float error = getvalue(); //讀到的數值
+  if(error > range){
+    setmotor(80,0);
+  }else if(error < -range){
+    setmotor(0,80);
+  }else{
+    setmotor(70,70);
   }
+  timer.run();
   if (!digitalRead(B1)) {
     setmotor(0, 0);
     delay(6000);

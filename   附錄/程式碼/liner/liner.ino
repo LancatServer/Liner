@@ -15,15 +15,14 @@ int Rmotor;
 int Lmotor;
 //Sensor right and left IR receiver
 //感測器目前只用RIR（右邊的感測器）
-#define RIR 40
-#define LIR 41
+#define RIR A1
 //button （開始開關）
 #define B1 45
 //演算法參數
-#define range 30
+#define range 100
 #define MT 0.4  //轉彎比重（現在）
-#define MR 0.4  //記憶比重（過去）
-#define MF 40
+#define MR 0.5  //記憶比重（過去）
+#define MF 20
 float H = 400; //黑線
 float L = 400; //
 float MID;
@@ -36,24 +35,21 @@ unsigned long num_of_time;
 unsigned long distance;
 
 //取得尋線資料（黑白線的參數要改）
-boolean getvalue(int IR) {
-  float x = analogRead(IR);
+float getvalue() {
+  float x = analogRead(RIR);
   MID = (H + L) / 2;
   //讓回傳值介於0到100，設比例s
   float s = 100 / (H - MID);
   if (x < L) {
     //覆寫最高值
     L = x;
-    return true;
+    return 0;
   } else if (x > H) {
     H = x;
-    return false;
+    return 0;
   } else {
-    if (x > MID){
-      return false;
-    }else{
-      return true;
-    }
+    float y = (x - MID) * s;
+    return y;
   }
 }
 
@@ -70,23 +66,21 @@ void setup() {
   lcd.begin(16, 2);
   lcd.setCursor(0, 0);
   lcd.print("Welcome");
-  //timer.setInterval(1000, output_score);
-  //timer.setInterval(50, set_score);
+  timer.setInterval(1000, output_score);
+  timer.setInterval(50, set_score);
   while (digitalRead(B1)) {}
   delay(500);
 }
 
 void loop() {
   // put your main code here, to run repeatedly:
-  boolean r = digitalRead(RIR);
-  boolean l = digitalRead(LIR);
-  if (r & !l){
-    setmotor(80, 0);
-  }else if(l & !r){
-    setmotor(0, 80);
-  }else if (!l & !r){
-    setmotor(50, 50);
-  }
+  float error = getvalue(); //讀到的數值
+  set_remenber(error);
+  float future = error - last_error;
+  float turn = MT * error + MR * remenber + MF * future;
+  setmotor(SPEED + turn, SPEED - turn);
+  last_error = error;
+  timer.run();
   if (!digitalRead(B1)) {
     setmotor(0, 0);
     delay(6000);
