@@ -5,27 +5,27 @@ int cut(int num,int a){
   return b%10;
 }
 
-void set_score() {
+boolean set_score() {
   float y = getvalue();
   score += abs(y);
-  distance += (Lmotor + Rmotor);
+  error_list[num_of_time][0] = millis() - startTime;
+  error_list[num_of_time][1] = int(y);
+  if (num_of_time >= 100){
+    done = true;
+  }else{
+    done = false;
+  }
   num_of_time ++;
 }
 
-void output_score(){
-  float ave = distance / score / 2;
-  
+void output_score(){  
   lcd.clear();
   lcd.setCursor(0,0);
-  String output = String(distance * 100 / score);
-  lcd.print("s:"+output + "%");
-
-  lcd.setCursor(0,1);
-  output = String(distance / num_of_time);
-  lcd.print("d:"+output);
+  String output = String(millis());
+  lcd.print("t:"+output);
 
   output = "e:" + String(score / num_of_time);
-  lcd.setCursor(8,1);
+  lcd.setCursor(0,1);
   lcd.print(output);
 }
 

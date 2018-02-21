@@ -4,6 +4,11 @@ SimpleTimer timer;
 #include <LiquidCrystal_I2C.h>
 #include <Wire.h>
 
+#include <SPI.h>
+#include <SD.h>
+
+File myFile;
+
 LiquidCrystal_I2C lcd(0x27, 2, 1, 0, 4, 5, 6, 7, 3, POSITIVE);
 //motor setting 馬達設定（依據車子狀況）
 #define R1 6
@@ -32,7 +37,10 @@ int SPEED = 60;
 
 unsigned long score;
 unsigned long num_of_time;
-unsigned long distance;
+unsigned int startTime;
+
+unsigned int error_list[200][2];
+boolean done = false;
 
 //取得尋線資料（黑白線的參數要改）
 float getvalue() {
@@ -70,6 +78,7 @@ void setup() {
   timer.setInterval(50, set_score);
   while (digitalRead(B1)) {}
   delay(500);
+  startTime = millis();
 }
 
 void loop() {
@@ -81,8 +90,16 @@ void loop() {
   setmotor(SPEED + turn, SPEED - turn);
   last_error = error;
   timer.run();
-  if (!digitalRead(B1)) {
+  if (done) {
     setmotor(0, 0);
+    myFile = SD.open("file/data.txt", FILE_WRITE);
+    if(myFile){
+      for(int i=0;i<200;i++){
+        String line = String("")+"Time: "+error_list[i][0]+"\terror: "+error_list[i][1];
+        myFile.println(line);
+      }
+      myFile.close();
+    }
     delay(6000);
     lcd.noBacklight();
     while (1 == 1) {}
