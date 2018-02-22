@@ -23,11 +23,12 @@ int Lmotor;
 #define RIR A1
 //button （開始開關）
 #define B1 45
+#define LED 24
 //演算法參數
 #define range 100
 #define MT 0.4  //轉彎比重（現在）
 #define MR 0.5  //記憶比重（過去）
-#define MF 20
+#define MF 40
 float H = 400; //黑線
 float L = 400; //
 float MID;
@@ -39,7 +40,7 @@ unsigned long score;
 unsigned long num_of_time;
 unsigned int startTime;
 
-unsigned int error_list[200][2];
+int error_list[200][2];
 boolean done = false;
 
 //取得尋線資料（黑白線的參數要改）
@@ -68,6 +69,7 @@ void set_remenber(float x) {
 
 void setup() {
   pinMode(B1, INPUT);
+  pinMode(LED, OUTPUT);
   digitalWrite(B1, HIGH); //上拉電阻
   Serial.begin(9600);
   Serial.println("begin");
@@ -76,6 +78,10 @@ void setup() {
   lcd.print("Welcome");
   timer.setInterval(1000, output_score);
   timer.setInterval(50, set_score);
+  if(!SD.begin(53)){
+    digitalWrite(LED, HIGH);
+  }
+  myFile = SD.open("data.txt", FILE_WRITE);
   while (digitalRead(B1)) {}
   delay(500);
   startTime = millis();
@@ -90,16 +96,18 @@ void loop() {
   setmotor(SPEED + turn, SPEED - turn);
   last_error = error;
   timer.run();
-  if (done) {
+  if (done || !digitalRead(B1)) {
     setmotor(0, 0);
-    myFile = SD.open("file/data.txt", FILE_WRITE);
-    if(myFile){
-      for(int i=0;i<200;i++){
-        String line = String("")+"Time: "+error_list[i][0]+"\terror: "+error_list[i][1];
-        myFile.println(line);
-      }
-      myFile.close();
+    
+    for(int i=0;i<200;i++){
+      String line = String("")+"Time:\t"+error_list[i][0]+"\t error: "+error_list[i][1];
+      myFile.println(line);
+      Serial.println(line);
     }
+    myFile.close();
+    digitalWrite(LED, HIGH);
+    delay(3000);
+    digitalWrite(LED, LOW);
     delay(6000);
     lcd.noBacklight();
     while (1 == 1) {}
