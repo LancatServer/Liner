@@ -28,7 +28,7 @@ int Lmotor;
 #define range 100
 #define MT 0.4  //轉彎比重（現在）
 #define MR 0.5  //記憶比重（過去）
-#define MF 40
+#define MF 400
 float H = 400; //黑線
 float L = 400; //
 float MID;
@@ -39,6 +39,7 @@ int SPEED = 60;
 unsigned long score;
 unsigned long num_of_time;
 unsigned int startTime;
+unsigned int Time;
 
 int error_list[200][2];
 boolean done = false;
@@ -76,7 +77,7 @@ void setup() {
   lcd.begin(16, 2);
   lcd.setCursor(0, 0);
   lcd.print("Welcome");
-  timer.setInterval(1000, output_score);
+  //timer.setInterval(1000, output_score);
   timer.setInterval(50, set_score);
   if(!SD.begin(53)){
     digitalWrite(LED, HIGH);
@@ -95,20 +96,22 @@ void loop() {
   float turn = MT * error + MR * remenber + MF * future;
   setmotor(SPEED + turn, SPEED - turn);
   last_error = error;
-  timer.run();
+  if(millis() - Time > 50){
+    Time = millis();
+    done = set_score(Time - startTime);
+  }
   if (done || !digitalRead(B1)) {
     setmotor(0, 0);
-    
+    myFile.println(String("MT: ") + MT + "\tMR: " + MR + "\tMF: " + MF);
     for(int i=0;i<200;i++){
-      String line = String("")+"Time:\t"+error_list[i][0]+"\t error: "+error_list[i][1];
+      String line = String("")+error_list[i][0]+"\t"+error_list[i][1];
       myFile.println(line);
-      Serial.println(line);
+      //Serial.println(line);
     }
     myFile.close();
     digitalWrite(LED, HIGH);
     delay(3000);
     digitalWrite(LED, LOW);
-    delay(6000);
     lcd.noBacklight();
     while (1 == 1) {}
   }

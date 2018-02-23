@@ -5,17 +5,17 @@ int cut(int num,int a){
   return b%10;
 }
 
-void set_score() {
+boolean set_score(int t) {
   float y = getvalue();
   score += abs(y);
-  error_list[num_of_time][0] = millis() - startTime;
+  error_list[num_of_time][0] = t;
   error_list[num_of_time][1] = int(y);
   if (num_of_time >= 200){
-    done = true;
+    return true;
   }else{
-    done = false;
+    num_of_time ++;
+    return false;
   }
-  num_of_time ++;
 }
 
 void output_score(){  
