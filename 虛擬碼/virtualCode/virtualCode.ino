@@ -38,8 +38,8 @@ void loop() {
 
   常數 SPEED = 60;
 
-  重複執行{
-    float error = 感測器函數();
+  void loop(){
+    float error = 取得正規劃誤差值();
     float turn = PID運算(error);
     設定馬達轉速(SPEED+turn, SPEED-turn);
   }
@@ -66,5 +66,18 @@ void loop() {
     float 差 = error - last_error;
     last_error = error;
     return 差 * Kd;
+  }
+
+  常數 range 30
+
+  void loop(){
+    float error = get_value();
+    if(error > range){
+      向右修正;
+    }else if(error < -range){
+      向左修正;
+    }else{
+      直走;
+    }
   }
   
