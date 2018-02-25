@@ -1,0 +1,111 @@
+<pre>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<font color="#434f54">&#47;&#47;liner.ino</font>
+
+<font color="#434f54">&#47;&#47;SD模組</font>
+<font color="#5e6d03">#include</font> <font color="#434f54">&lt;</font><b><font color="#d35400">SPI</font></b><font color="#434f54">.</font><font color="#000000">h</font><font color="#434f54">&gt;</font>
+<font color="#5e6d03">#include</font> <font color="#434f54">&lt;</font><b><font color="#d35400">SD</font></b><font color="#434f54">.</font><font color="#000000">h</font><font color="#434f54">&gt;</font>
+<font color="#d35400">File</font> <font color="#000000">myFile</font><font color="#000000">;</font>
+
+<font color="#434f54">&#47;&#47;motor setting 馬達設定（依據車子狀況）</font>
+<font color="#5e6d03">#define</font> <font color="#000000">R1</font> <font color="#000000">6</font>
+<font color="#5e6d03">#define</font> <font color="#000000">R2</font> <font color="#000000">5</font>
+<font color="#5e6d03">#define</font> <font color="#000000">L1</font> <font color="#000000">4</font>
+<font color="#5e6d03">#define</font> <font color="#000000">L2</font> <font color="#000000">3</font>
+<font color="#5e6d03">#define</font> <font color="#000000">FIX</font> <font color="#434f54">-</font><font color="#000000">5</font>
+
+<font color="#5e6d03">#define</font> <font color="#000000">RIR</font> <font color="#000000">A1</font> &nbsp;<font color="#434f54">&#47;&#47;sensor</font>
+<font color="#5e6d03">#define</font> <font color="#000000">B1</font> <font color="#000000">45</font> &nbsp;&nbsp;<font color="#434f54">&#47;&#47;開關</font>
+<font color="#5e6d03">#define</font> <font color="#000000">LED</font> <font color="#000000">24</font>
+<font color="#434f54">&#47;&#47;演算法參數</font>
+<font color="#5e6d03">#define</font> <font color="#000000">Kp</font> <font color="#000000">0.4</font> &nbsp;<font color="#434f54">&#47;&#47;轉彎比重（現在）</font>
+<font color="#5e6d03">#define</font> <font color="#000000">Ki</font> <font color="#000000">0.5</font> &nbsp;<font color="#434f54">&#47;&#47;記憶比重（過去）</font>
+<font color="#5e6d03">#define</font> <font color="#000000">Kd</font> <font color="#000000">40</font>
+<font color="#00979c">float</font> <font color="#000000">H</font> <font color="#434f54">=</font> <font color="#000000">400</font><font color="#000000">;</font> &nbsp;<font color="#434f54">&#47;&#47;黑線</font>
+<font color="#00979c">float</font> <font color="#000000">L</font> <font color="#434f54">=</font> <font color="#000000">400</font><font color="#000000">;</font> &nbsp;<font color="#434f54">&#47;&#47;白線</font>
+<font color="#00979c">float</font> <font color="#000000">Integral</font><font color="#000000">;</font>
+<font color="#00979c">float</font> <font color="#000000">last_error</font><font color="#000000">;</font>
+<font color="#00979c">int</font> <font color="#000000">SPEED</font> <font color="#434f54">=</font> <font color="#000000">60</font><font color="#000000">;</font>
+
+<font color="#00979c">unsigned</font> <font color="#00979c">int</font> <font color="#000000">num_of_time</font><font color="#000000">;</font>
+<font color="#00979c">unsigned</font> <font color="#00979c">int</font> <font color="#000000">startTime</font><font color="#000000">;</font>
+<font color="#00979c">unsigned</font> <font color="#00979c">int</font> <font color="#000000">Time</font><font color="#000000">;</font>
+
+<font color="#5e6d03">#define</font> <font color="#000000">len</font> <font color="#000000">200</font>
+<font color="#00979c">int</font> <font color="#000000">error_list</font><font color="#000000">[</font><font color="#000000">len</font><font color="#000000">]</font><font color="#000000">[</font><font color="#000000">2</font><font color="#000000">]</font><font color="#000000">;</font>
+<font color="#00979c">boolean</font> <font color="#000000">done</font> <font color="#434f54">=</font> <font color="#00979c">false</font><font color="#000000">;</font>
+
+<font color="#00979c">float</font> <font color="#000000">get_value</font><font color="#000000">(</font><font color="#000000">)</font> <font color="#000000">{</font>
+ &nbsp;<font color="#00979c">float</font> <font color="#000000">x</font> <font color="#434f54">=</font> <font color="#d35400">analogRead</font><font color="#000000">(</font><font color="#000000">RIR</font><font color="#000000">)</font><font color="#000000">;</font>
+ &nbsp;<font color="#00979c">float</font> <font color="#000000">MID</font> <font color="#434f54">=</font> <font color="#000000">(</font><font color="#000000">H</font> <font color="#434f54">+</font> <font color="#000000">L</font><font color="#000000">)</font> <font color="#434f54">&#47;</font> <font color="#000000">2</font><font color="#000000">;</font>
+ &nbsp;<font color="#5e6d03">if</font> <font color="#000000">(</font><font color="#000000">x</font> <font color="#434f54">&lt;</font> <font color="#000000">L</font><font color="#000000">)</font> <font color="#000000">{</font>
+ &nbsp;&nbsp;&nbsp;<font color="#434f54">&#47;&#47;覆寫最高值</font>
+ &nbsp;&nbsp;&nbsp;<font color="#000000">L</font> <font color="#434f54">=</font> <font color="#000000">x</font><font color="#000000">;</font>
+ &nbsp;&nbsp;&nbsp;<font color="#5e6d03">return</font> <font color="#434f54">-</font><font color="#000000">100</font><font color="#000000">;</font>
+ &nbsp;<font color="#000000">}</font> <font color="#5e6d03">else</font> <font color="#5e6d03">if</font> <font color="#000000">(</font><font color="#000000">x</font> <font color="#434f54">&gt;</font> <font color="#000000">H</font><font color="#000000">)</font> <font color="#000000">{</font>
+ &nbsp;&nbsp;&nbsp;<font color="#000000">H</font> <font color="#434f54">=</font> <font color="#000000">x</font><font color="#000000">;</font>
+ &nbsp;&nbsp;&nbsp;<font color="#5e6d03">return</font> <font color="#000000">100</font><font color="#000000">;</font>
+ &nbsp;<font color="#000000">}</font> <font color="#5e6d03">else</font> <font color="#000000">{</font>
+ &nbsp;&nbsp;&nbsp;<font color="#5e6d03">return</font> <font color="#000000">(</font><font color="#000000">x</font> <font color="#434f54">-</font> <font color="#000000">MID</font><font color="#000000">)</font> <font color="#434f54">&#47;</font> <font color="#000000">(</font><font color="#000000">H</font> <font color="#434f54">-</font> <font color="#000000">L</font><font color="#000000">)</font> <font color="#434f54">*</font> <font color="#000000">200</font><font color="#000000">;</font>
+ &nbsp;<font color="#000000">}</font>
+<font color="#000000">}</font>
+
+<font color="#00979c">boolean</font> <font color="#000000">set_score</font><font color="#000000">(</font><font color="#00979c">int</font> <font color="#000000">error</font><font color="#434f54">,</font> <font color="#00979c">int</font> <font color="#000000">t</font><font color="#000000">)</font> <font color="#000000">{</font>
+ &nbsp;<font color="#000000">error_list</font><font color="#000000">[</font><font color="#000000">num_of_time</font><font color="#000000">]</font><font color="#000000">[</font><font color="#000000">0</font><font color="#000000">]</font> <font color="#434f54">=</font> <font color="#000000">t</font><font color="#000000">;</font>
+ &nbsp;<font color="#000000">error_list</font><font color="#000000">[</font><font color="#000000">num_of_time</font><font color="#000000">]</font><font color="#000000">[</font><font color="#000000">1</font><font color="#000000">]</font> <font color="#434f54">=</font> <font color="#000000">error</font><font color="#000000">;</font>
+ &nbsp;<font color="#5e6d03">if</font> <font color="#000000">(</font><font color="#000000">num_of_time</font> <font color="#434f54">&gt;</font> <font color="#000000">len</font><font color="#000000">)</font><font color="#000000">{</font>
+ &nbsp;&nbsp;&nbsp;<font color="#5e6d03">return</font> <font color="#00979c">true</font><font color="#000000">;</font>
+ &nbsp;<font color="#000000">}</font><font color="#5e6d03">else</font><font color="#000000">{</font>
+ &nbsp;&nbsp;&nbsp;<font color="#000000">num_of_time</font> <font color="#434f54">++</font><font color="#000000">;</font>
+ &nbsp;&nbsp;&nbsp;<font color="#5e6d03">return</font> <font color="#00979c">false</font><font color="#000000">;</font>
+ &nbsp;<font color="#000000">}</font>
+<font color="#000000">}</font>
+
+<font color="#00979c">float</font> <font color="#000000">PID</font><font color="#000000">(</font><font color="#00979c">float</font> <font color="#000000">error</font><font color="#000000">)</font> <font color="#000000">{</font>
+ &nbsp;<font color="#00979c">float</font> <font color="#000000">p</font> <font color="#434f54">=</font> <font color="#000000">error</font> <font color="#434f54">*</font> <font color="#000000">Kp</font><font color="#000000">;</font>
+ &nbsp;<font color="#000000">Integral</font> <font color="#434f54">*=</font> <font color="#000000">3</font> <font color="#434f54">&#47;</font> <font color="#000000">4</font><font color="#000000">;</font>
+ &nbsp;<font color="#000000">Integral</font> <font color="#434f54">+=</font> <font color="#000000">error</font><font color="#000000">;</font>
+ &nbsp;<font color="#00979c">float</font> <font color="#000000">i</font> <font color="#434f54">=</font> <font color="#000000">Integral</font> <font color="#434f54">*</font> <font color="#000000">Ki</font><font color="#000000">;</font>
+ &nbsp;<font color="#00979c">float</font> <font color="#000000">d</font> <font color="#434f54">=</font> <font color="#000000">(</font><font color="#000000">error</font> <font color="#434f54">-</font> <font color="#000000">last_error</font><font color="#000000">)</font> <font color="#434f54">*</font> <font color="#000000">Kd</font><font color="#000000">;</font>
+ &nbsp;<font color="#000000">last_error</font> <font color="#434f54">=</font> <font color="#000000">error</font><font color="#000000">;</font>
+ &nbsp;<font color="#5e6d03">return</font> <font color="#000000">p</font> <font color="#434f54">+</font> <font color="#000000">i</font> <font color="#434f54">+</font> <font color="#000000">d</font><font color="#000000">;</font>
+<font color="#000000">}</font>
+
+<font color="#00979c">void</font> <font color="#5e6d03">setup</font><font color="#000000">(</font><font color="#000000">)</font> <font color="#000000">{</font>
+ &nbsp;<font color="#d35400">pinMode</font><font color="#000000">(</font><font color="#000000">B1</font><font color="#434f54">,</font> <font color="#00979c">INPUT</font><font color="#000000">)</font><font color="#000000">;</font>
+ &nbsp;<font color="#d35400">pinMode</font><font color="#000000">(</font><font color="#000000">LED</font><font color="#434f54">,</font> <font color="#00979c">OUTPUT</font><font color="#000000">)</font><font color="#000000">;</font>
+ &nbsp;<font color="#d35400">digitalWrite</font><font color="#000000">(</font><font color="#000000">B1</font><font color="#434f54">,</font> <font color="#00979c">HIGH</font><font color="#000000">)</font><font color="#000000">;</font> <font color="#434f54">&#47;&#47;上拉電阻</font>
+ &nbsp;<font color="#5e6d03">if</font><font color="#000000">(</font><font color="#434f54">!</font><b><font color="#d35400">SD</font></b><font color="#434f54">.</font><font color="#d35400">begin</font><font color="#000000">(</font><font color="#000000">53</font><font color="#000000">)</font><font color="#000000">)</font><font color="#000000">{</font>
+ &nbsp;&nbsp;&nbsp;<font color="#d35400">digitalWrite</font><font color="#000000">(</font><font color="#000000">LED</font><font color="#434f54">,</font> <font color="#00979c">HIGH</font><font color="#000000">)</font><font color="#000000">;</font>
+ &nbsp;<font color="#000000">}</font>
+ &nbsp;<font color="#000000">myFile</font> <font color="#434f54">=</font> <b><font color="#d35400">SD</font></b><font color="#434f54">.</font><font color="#d35400">open</font><font color="#000000">(</font><font color="#005c5f">&#34;data.txt&#34;</font><font color="#434f54">,</font> <font color="#00979c">FILE_WRITE</font><font color="#000000">)</font><font color="#000000">;</font>
+ &nbsp;<font color="#5e6d03">while</font> <font color="#000000">(</font><font color="#d35400">digitalRead</font><font color="#000000">(</font><font color="#000000">B1</font><font color="#000000">)</font><font color="#000000">)</font> <font color="#000000">{</font><font color="#000000">}</font>
+ &nbsp;<font color="#5e6d03">while</font> <font color="#000000">(</font><font color="#434f54">!</font><font color="#d35400">digitalRead</font><font color="#000000">(</font><font color="#000000">B1</font><font color="#000000">)</font><font color="#000000">)</font> <font color="#000000">{</font><font color="#000000">}</font>
+ &nbsp;<font color="#d35400">delay</font><font color="#000000">(</font><font color="#000000">500</font><font color="#000000">)</font><font color="#000000">;</font>
+ &nbsp;<font color="#000000">startTime</font> <font color="#434f54">=</font> <font color="#d35400">millis</font><font color="#000000">(</font><font color="#000000">)</font><font color="#000000">;</font>
+<font color="#000000">}</font>
+
+<font color="#00979c">void</font> <font color="#5e6d03">loop</font><font color="#000000">(</font><font color="#000000">)</font> <font color="#000000">{</font>
+ &nbsp;<font color="#00979c">float</font> <font color="#000000">error</font> <font color="#434f54">=</font> <font color="#000000">get_value</font><font color="#000000">(</font><font color="#000000">)</font><font color="#000000">;</font>
+ &nbsp;<font color="#00979c">float</font> <font color="#000000">turn</font> <font color="#434f54">=</font> <font color="#000000">PID</font><font color="#000000">(</font><font color="#000000">error</font><font color="#000000">)</font><font color="#000000">;</font>
+ &nbsp;<font color="#000000">setmotor</font><font color="#000000">(</font><font color="#000000">SPEED</font> <font color="#434f54">+</font> <font color="#000000">turn</font><font color="#434f54">,</font> <font color="#000000">SPEED</font> <font color="#434f54">-</font> <font color="#000000">turn</font><font color="#000000">)</font><font color="#000000">;</font>
+ &nbsp;
+ &nbsp;<font color="#5e6d03">if</font><font color="#000000">(</font><font color="#d35400">millis</font><font color="#000000">(</font><font color="#000000">)</font> <font color="#434f54">-</font> <font color="#000000">Time</font> <font color="#434f54">&gt;</font> <font color="#000000">50</font><font color="#000000">)</font><font color="#000000">{</font>
+ &nbsp;&nbsp;&nbsp;<font color="#000000">Time</font> <font color="#434f54">=</font> <font color="#d35400">millis</font><font color="#000000">(</font><font color="#000000">)</font><font color="#000000">;</font>
+ &nbsp;&nbsp;&nbsp;<font color="#000000">done</font> <font color="#434f54">=</font> <font color="#000000">set_score</font><font color="#000000">(</font><font color="#000000">error</font><font color="#434f54">,</font> <font color="#000000">Time</font> <font color="#434f54">-</font> <font color="#000000">startTime</font><font color="#000000">)</font><font color="#000000">;</font>
+ &nbsp;<font color="#000000">}</font><font color="#5e6d03">else</font> <font color="#5e6d03">if</font><font color="#000000">(</font><font color="#000000">done</font> <font color="#434f54">||</font> <font color="#434f54">!</font><font color="#d35400">digitalRead</font><font color="#000000">(</font><font color="#000000">B1</font><font color="#000000">)</font><font color="#000000">)</font> <font color="#000000">{</font>
+ &nbsp;&nbsp;&nbsp;<font color="#000000">setmotor</font><font color="#000000">(</font><font color="#000000">0</font><font color="#434f54">,</font> <font color="#000000">0</font><font color="#000000">)</font><font color="#000000">;</font>
+ &nbsp;&nbsp;&nbsp;<font color="#d35400">digitalWrite</font><font color="#000000">(</font><font color="#000000">LED</font><font color="#434f54">,</font> <font color="#00979c">HIGH</font><font color="#000000">)</font><font color="#000000">;</font>
+ &nbsp;&nbsp;&nbsp;<font color="#000000">myFile</font><font color="#434f54">.</font><font color="#d35400">println</font><font color="#000000">(</font><font color="#00979c">String</font><font color="#000000">(</font><font color="#005c5f">&#34;Kp: &#34;</font><font color="#000000">)</font> <font color="#434f54">+</font> <font color="#000000">Kp</font> <font color="#434f54">+</font> <font color="#005c5f">&#34;\tKi: &#34;</font> <font color="#434f54">+</font> <font color="#000000">Ki</font> <font color="#434f54">+</font> <font color="#005c5f">&#34;\tKd: &#34;</font> <font color="#434f54">+</font> <font color="#000000">Kd</font><font color="#000000">)</font><font color="#000000">;</font>
+ &nbsp;&nbsp;&nbsp;<font color="#5e6d03">for</font><font color="#000000">(</font><font color="#00979c">int</font> <font color="#000000">i</font><font color="#434f54">=</font><font color="#000000">0</font><font color="#000000">;</font><font color="#000000">i</font><font color="#434f54">&lt;</font><font color="#000000">len</font><font color="#000000">;</font><font color="#000000">i</font><font color="#434f54">++</font><font color="#000000">)</font><font color="#000000">{</font>
+ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<font color="#00979c">String</font> <font color="#000000">line</font> <font color="#434f54">=</font> <font color="#00979c">String</font><font color="#000000">(</font><font color="#005c5f">&#34;&#34;</font><font color="#000000">)</font><font color="#434f54">+</font><font color="#000000">error_list</font><font color="#000000">[</font><font color="#000000">i</font><font color="#000000">]</font><font color="#000000">[</font><font color="#000000">0</font><font color="#000000">]</font><font color="#434f54">+</font><font color="#005c5f">&#34;\t&#34;</font><font color="#434f54">+</font><font color="#000000">error_list</font><font color="#000000">[</font><font color="#000000">i</font><font color="#000000">]</font><font color="#000000">[</font><font color="#000000">1</font><font color="#000000">]</font><font color="#000000">;</font>
+ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<font color="#000000">myFile</font><font color="#434f54">.</font><font color="#d35400">println</font><font color="#000000">(</font><font color="#000000">line</font><font color="#000000">)</font><font color="#000000">;</font>
+ &nbsp;&nbsp;&nbsp;<font color="#000000">}</font>
+ &nbsp;&nbsp;&nbsp;<font color="#000000">myFile</font><font color="#434f54">.</font><font color="#d35400">close</font><font color="#000000">(</font><font color="#000000">)</font><font color="#000000">;</font>
+ &nbsp;&nbsp;&nbsp;<font color="#d35400">delay</font><font color="#000000">(</font><font color="#000000">1000</font><font color="#000000">)</font><font color="#000000">;</font>
+ &nbsp;&nbsp;&nbsp;<font color="#d35400">digitalWrite</font><font color="#000000">(</font><font color="#000000">LED</font><font color="#434f54">,</font> <font color="#00979c">LOW</font><font color="#000000">)</font><font color="#000000">;</font>
+ &nbsp;&nbsp;&nbsp;<font color="#5e6d03">while</font> <font color="#000000">(</font><font color="#000000">1</font><font color="#000000">)</font> <font color="#000000">{</font><font color="#000000">}</font>
+ &nbsp;<font color="#000000">}</font>
+<font color="#000000">}</font>
+
+</pre>

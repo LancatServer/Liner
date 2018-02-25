@@ -9,8 +9,6 @@ void setmotor(int B, int A) {
     B = max(B, 30);
     A = min(A, 150);
     B = min(B, 150);
-    Rmotor = A;
-    Lmotor = B;
     if (A < 0) {
       A += FIX;
       analogWrite(R1, A);
